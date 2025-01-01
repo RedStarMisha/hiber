@@ -1,0 +1,39 @@
+# MODE указывает h2 имитировать поведение других БД. Есть и другие параметры
+spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+
+# Параметры H2
+# Включить консоль доступа к базе данных h2
+spring.h2.console.enabled=true
+# изменить путь к консоли доступа к БД. По дефолту /h2-console
+spring.h2.console.path=/h2-console
+# Отключить трассировку действий в консоли h2. По дефолту false
+spring.h2.console.settings.trace=false
+# Разрешить доступ к api консоли h2 с других хост машин кроме localhost. по дефолту false
+spring.h2.console.settings.web-allow-others=false
+
+# Параметры Hibernate
+# Автогенерация схемы: none - не генерить
+    # validate - только валидировать согданную схему с состояние сущностей и бросать ошибку если не совпадает
+    # update - только добавлять новые таблицы и поля, но не удалялть и не изменять существующие
+    # create - при запуске удалять предыдущую схему и создавать новую
+    # create-drop - создавать новую схему при запуске и удалять при завершении программы
+    # drop - только удалять
+spring.jpa.hibernate.ddl-auto=update
+# Изменить стратегию нейминга таблиц и столбцов при автогенерации. По дефолту CamelCaseToUnderscoresNamingStrategy
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+# Диалект. Нужен только при автогенерации схемы. Без него могут возникать ошибки
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+# тоже самое что spring.jpa.hibernate.ddl-auto, только без тонкой настройки. Только true или false
+spring.jpa.generate-ddl=false
+# трассировка запросов sql
+spring.jpa.show-sql=true
+# можно добавить properties самого Hibernate в его Map в формате k-v (в примере задается диалект)
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
+# данный параметр отвечает за момент использования наших источников данных (скриптов data.sql и schema.sql).
+# Если мы их используем для инициализации таблиц, то сперва нужно поднять весь контекст и инициализировать hibernate. По этому следует ставить параметр в true
+spring.jpa.defer-datasource-initialization=false
+# Отключить инициализацию через скрипты .sql
+spring.sql.init.mode=never

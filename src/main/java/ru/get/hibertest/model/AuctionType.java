@@ -1,4 +1,7 @@
 package ru.get.hibertest.model;
 
-public class AuctionType {
+public enum AuctionType {
+    HIGHEST_BID,
+    LOWER_BID,
+    FIXED_PRICE
 }
