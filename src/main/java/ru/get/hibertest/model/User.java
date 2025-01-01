@@ -1,6 +1,8 @@
 package ru.get.hibertest.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +12,22 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
+
+    @Column(name = "username")
+    @NotNull
+    @NotBlank
+    private String username;
+    @Column
+    @NotNull
+    @NotBlank
+    private String firstname;
+    @Column
+    @NotNull
+    @NotBlank
+    private String lastname;
+
+    @Column
+    private String email;
 
     @Getter
     @Setter
