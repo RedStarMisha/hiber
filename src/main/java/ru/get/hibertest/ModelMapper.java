@@ -17,6 +17,14 @@ public class ModelMapper {
     }
 
     public User mapToDto(UserDto userDto) {
+        return User.builder()
+                .id(userDto.getId())
+                .username(userDto.getUsername())
+                .email(userDto.getEmail())
+                .build();
+    }
+
+    public UserDto mapToDto(User user) {
         return null;
     }
 }

@@ -1,4 +1,4 @@
-package ru.get.hibertest.service;
+package ru.get.hibertest.service.buisnes;
 
 import org.springframework.stereotype.Service;
 import ru.get.hibertest.model.Item;

@@ -10,7 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.get.hibertest.ValidatingAndProcessingUserService;
+import ru.get.hibertest.service.validate.UserValidatingAndProcessingService;
 import ru.get.hibertest.model.dto.UserDto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,7 +29,7 @@ class UserControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private ValidatingAndProcessingUserService userService;
+    private UserValidatingAndProcessingService userService;
 
     @Test
     void addUserAndReturn200Test() throws Exception {
@@ -60,7 +60,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isOk());
-        // Этот класс-контейнер предназначен для перехватывания параметра. В дальнейшем его оттуда достать и проанализировать
+        // Этот класс-контейнер предназначен для перехватывания параметра. В дальнейшем его можно оттуда достать и проанализировать
         ArgumentCaptor<UserDto> userCaptor = ArgumentCaptor.forClass(UserDto.class);
         Mockito.verify(userService, Mockito.times(1)).addUser(userCaptor.capture());
         assertEquals(userCaptor.getValue(), userDto);

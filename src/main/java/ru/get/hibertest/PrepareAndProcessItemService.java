@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.get.hibertest.model.Item;
 import ru.get.hibertest.model.dto.ItemDto;
-import ru.get.hibertest.service.ItemService;
+import ru.get.hibertest.service.buisnes.ItemService;
 
 @Service
 @RequiredArgsConstructor
