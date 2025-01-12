@@ -4,25 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <groupId>ru.get</groupId>
+        <artifactId>hiber-test</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>ru.get</groupId>
-    <artifactId>hiber-test</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <modules>
-        <module>s3connector</module>
-        <module>hiber</module>
-    </modules>
+    <artifactId>hiber</artifactId>
 
     <properties>
-        <org.mapstruct.extensions.spring.version>1.1.2</org.mapstruct.extensions.spring.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
 
     <dependencies>
         <dependency>
@@ -30,7 +23,7 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-<!--        для валидации в spring нужно явно указывать зависимость-->
+        <!--        для валидации в spring нужно явно указывать зависимость-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
@@ -64,13 +57,14 @@
             <version>1.6.0.Beta1</version>
         </dependency>
 
-    <!-- Данная зависимость добавляется вместо плагина. Плагин конфликтует с ломбок -->
-    <dependency>
-        <groupId>org.mapstruct</groupId>
-        <artifactId>mapstruct-processor</artifactId>
-        <version>1.6.0.Beta1</version>
-        <scope>provided</scope>
-    </dependency>
+        <!-- Данная зависимость добавляется вместо плагина. Плагин конфликтует с ломбок -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.6.0.Beta1</version>
+            <scope>provided</scope>
+        </dependency>
 
     </dependencies>
+
 </project>
