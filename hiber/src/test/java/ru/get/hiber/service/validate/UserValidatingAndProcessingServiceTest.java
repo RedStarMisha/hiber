@@ -1,4 +1,4 @@
-package ru.hiber.service.validate;
+package ru.get.hiber.service.validate;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -8,11 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.get.hiber.model.User;
 import ru.get.hiber.model.dto.UserDto;
 import ru.get.hiber.service.buisnes.UserService;
 import ru.get.hiber.service.validate.UserValidatingAndProcessingService;
+import ru.get.hiber.util.UserMapper;
 import ru.get.hiber.validation.AddGroup;
 
 
@@ -33,6 +35,9 @@ class UserValidatingAndProcessingServiceTest {
 
     @Mock
     UserService userService;
+
+    @Mock
+    UserMapper userMapper;
 
     private Validator validator;
 
@@ -55,6 +60,7 @@ class UserValidatingAndProcessingServiceTest {
     void callAddUserMethodFromServiceTest() {
         UserDto userDto = UserDto.builder().build();
 
+        Mockito.when(userMapper.mapToUser(any(UserDto.class))).thenReturn(User.builder().build());
         userValidatingAndProcessingService.addUser(userDto);
 
         verify(userService, times(1)).addUser(any(User.class));

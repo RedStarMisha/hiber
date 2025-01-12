@@ -1,4 +1,4 @@
-package ru.hiber.controller;
+package ru.get.hiber.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +14,6 @@ import ru.get.hiber.service.validate.UserValidatingAndProcessingService;
 import ru.get.hiber.model.dto.UserDto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
