@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>ru.get</groupId>
-        <artifactId>hiber-test</artifactId>
+        <artifactId>my-pet-test</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -17,6 +17,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.mapstruct.extensions.spring.version>1.1.2</org.mapstruct.extensions.spring.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -65,7 +72,54 @@
             <version>1.6.0.Beta1</version>
             <scope>provided</scope>
         </dependency>
-
+        <!--    Swagger-->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.therapi</groupId>
+            <artifactId>therapi-runtime-javadoc</artifactId>
+            <version>0.15.0</version>
+            <scope>provided</scope> <!-- Используйте 'provided', если необходимо, это зависит от вашего проекта -->
+            <classifier>javadoc</classifier> <!-- Если необходимо, проверьте, нужен ли этот атрибут -->
+        </dependency>
+        <!--    Actuator-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                        <configuration>
+                            <excludeInfoProperties>
+                                <infoProperty>time</infoProperty>
+                            </excludeInfoProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 
 </project>

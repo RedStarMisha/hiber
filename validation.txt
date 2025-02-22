@@ -1,0 +1,41 @@
+Для валидации используются анноации @Valid и @Validation
+- @Validation - аннотация класса. Используется когда надо провести валидацию с помощью аннотации @Valid. Вешается на класс. Без нее @Valid работать не будет
+- @Validation также используется когда есть группы валидации. Тогда ее над классом вешать не обязательно, можно ее написать в перед параметром в методе или над самим методом
+- Валидация списка объектов: Для валидации списка объектов используется только аннотация @Valid (ставиться в параметрах в методе).
+При это обязательно над классом указать @Validated. Если также присутсвует группировка валидации, то @Validated(group) дополнительно указывается
+При валидации может выбрасываться 2 типа исключений ConstraintViolationException и MethodArgumentNotValidException
+-можно создать свои аннотации валидации
+    @Target({ElementType.FIELD})
+    @Retention(RetentionPolicy.RUNTIME)
+    @Constraint(validatedBy = {TaskStatusValidator.class})
+    @Repeatable(TaskStatusValidations.class)
+    public @interface TaskStatusValidation {
+        TaskStatusBuilder statusGroup();
+        Class<?>[] groups() default {};
+        String message() default "taskStatus not correct";
+        Class<? extends Payload>[] payload() default {};
+    }
+
+    @Constraint указывает сам валидатор
+        public class TaskStatusValidator implements ConstraintValidator<TaskStatusValidation, TaskStatus> {
+            private List<TaskStatus> validStatusGroup;
+            @Override
+            public void initialize(TaskStatusValidation constraintAnnotation) {
+                validStatusGroup = constraintAnnotation.statusGroup().getStatusList();
+            }
+
+            @Override
+            public boolean isValid(TaskStatus value, ConstraintValidatorContext context) {
+                if (value == null) {
+                    return true;
+                }
+
+                return validStatusGroup.contains(value);
+            }
+        }
+    @Repeatable указывает что аннотации валидации этого списка можно использовать по несколько штук над полем или методом. без нее нельзя так делать
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface TaskStatusValidations {
+            TaskStatusValidation[] value() default {};
+        }

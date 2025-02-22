@@ -1,0 +1,4 @@
+springdoc.show-actuator=true свойство которое добавляет апи сваггера в actuator (работает только с отличным портом актуатора от порта приложения)
+management.endpoints.web.exposure.include=openapi, swagger-ui - указать какие api сваггера добавить в актуатор
+
+@Hidden скрывает информацию по api

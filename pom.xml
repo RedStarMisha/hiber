@@ -11,12 +11,15 @@
     </parent>
 
     <groupId>ru.get</groupId>
-    <artifactId>hiber-test</artifactId>
+    <artifactId>my-pet-test</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>s3connector</module>
         <module>hiber</module>
+        <module>kafka-gateway</module>
+        <module>testclient</module>
+        <module>caffeine-test</module>
     </modules>
 
 </project>

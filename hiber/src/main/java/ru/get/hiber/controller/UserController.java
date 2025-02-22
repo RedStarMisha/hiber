@@ -1,5 +1,7 @@
 package ru.get.hiber.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +15,8 @@ import ru.get.hiber.model.dto.UserDto;
 @RequestMapping(path = "/user")
 public class UserController {
     private final UserValidatingAndProcessingService processUserService;
+
+
     @PostMapping("/add")
     public UserDto addUser(@RequestBody UserDto userDto) {
         return processUserService.addUser(userDto);
