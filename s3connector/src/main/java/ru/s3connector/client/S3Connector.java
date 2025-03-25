@@ -3,14 +3,15 @@ package ru.s3connector.client;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.s3connector.UploadResult;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.ResponsePublisher;
@@ -25,11 +26,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 @RequiredArgsConstructor
@@ -204,6 +206,13 @@ public class S3Connector {
                         .key("lego/" + name));
         return responseBytes.asByteArray();
     }
+    public Resource getFileAsStream(String name) {
+        ResponseInputStream<GetObjectResponse> responseInputStream =
+                s3Client.getObject(req -> req.bucket("test-bucket")
+                        .key("lego/" + name));
+        Resource resource = new InputStreamResource(responseInputStream);
+        return resource;
+    }
 
     public void getTags(String name) {
         GetObjectTaggingResponse tags = s3Client.getObjectTagging(req -> req.bucket("test-bucket")
@@ -221,7 +230,7 @@ public class S3Connector {
         response.contents().forEach(obj -> log.info(obj.key()));
     }
 
-    public Mono<ResponsePublisher<GetObjectResponse>>getFileAsinc(String name) {
+    public Mono<ResponsePublisher<GetObjectResponse>> getFileAsinc(String name) {
         GetObjectRequest objectRequest = GetObjectRequest.builder()
                 .key("lego/" + name)
                 .bucket("test-bucket")
@@ -264,5 +273,28 @@ public class S3Connector {
         GetBucketLifecycleConfigurationResponse response = s3Client.getBucketLifecycleConfiguration(req -> req.bucket(name));
         return response.rules().stream().map(LifecycleRule::id)
                 .toList();
+    }
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+
+    public void uploadFile(MultipartFile file) {
+        String original = file.getOriginalFilename();
+        try {
+//            PutObjectResponse response = s3Client.putObject(req ->
+//                            req.bucket("test-bucket")
+//                                    .key("lego/" + original),
+//                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket("test-bucket")
+                    .key("lego/" + original).build();
+            CompletableFuture<PutObjectResponse> future = s3AsyncClient.putObject(request,
+                    AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
+
+            future.thenAccept(responseFuture -> log.info("complete {}", file.getOriginalFilename()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

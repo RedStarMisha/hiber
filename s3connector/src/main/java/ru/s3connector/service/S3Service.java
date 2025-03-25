@@ -5,12 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.s3connector.UploadResult;
 import ru.s3connector.UploadState;
 import ru.s3connector.client.S3Connector;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
@@ -38,6 +40,10 @@ public class S3Service {
         log.info("single path - " + (end - start));
         return list;
     }
+
+    public void uploadFiles(MultipartFile[] files) {
+        Arrays.stream(files).forEach(s3Connector::uploadFile);
+    }
     public CompletableFuture<PutObjectResponse> uploadObjectsWithTags(HttpHeaders headers, Flux<ByteBuffer> data, String name) {
         MediaType mediaType = headers.getContentType();
         long length = headers.getContentLength();
@@ -56,6 +62,17 @@ public class S3Service {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;
         }
         return s3Connector.putFlux(length, name, mediaType, data);
+    }
+    public Mono<UploadResult> uploadObjectsFlux(HttpHeaders headers, Flux<ByteBuffer> data, String name) {
+        MediaType mediaType = headers.getContentType();
+        long length = headers.getContentLength();
+
+        if (mediaType == null) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return Mono.fromFuture(s3Connector.putFlux(length, name, mediaType, data))
+                .map(response -> new UploadResult(HttpStatus.CREATED, List.of("asd")));
     }
 
     int BUFFER_SIZE = 5 * 1024 * 1024;

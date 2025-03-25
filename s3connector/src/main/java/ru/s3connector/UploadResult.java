@@ -16,6 +16,10 @@ public class UploadResult {
     private HttpStatus status;
     private String[] keys;
 
+    private String fileName;
+
+    private String bucket;
+
     public UploadResult(HttpStatus status, List<String> keys) {
         this.status = status;
         this.keys = keys == null ? new String[] {}: keys.toArray(new String[] {});
