@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import ru.get.hiber.model.Item;
 import ru.get.hiber.repository.ItemRepository;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -15,5 +17,11 @@ public class ItemService {
         Item savedItem = itemRepository.save(item);
         log.info("Add new item {}", savedItem);
         return savedItem;
+    }
+
+    public List<Item> addItems(List<Item> items) {
+        items = itemRepository.saveAll(items);
+        log.info("Item's batch of {} pieces was added", items.size());
+        return items;
     }
 }

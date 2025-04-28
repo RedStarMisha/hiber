@@ -1,6 +1,7 @@
 package ru.get.hiber.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.OrderBy;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,14 +12,15 @@ import org.hibernate.generator.EventType;
 import ru.get.hiber.converter.MonetaryAmountConverter;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.util.*;
 
 @Entity
 @Data
 public class Item {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "meSeqGen")
-    @SequenceGenerator(name = "mySeqGen", sequenceName = "my_sequence_name", allocationSize = 5)
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "meSeqGen")
+//    @SequenceGenerator(name = "mySeqGen", sequenceName = "my_sequence_name", allocationSize = 50)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @NotNull(message = "Name should not be null")
     @NotBlank(message = "Name should not blank")
@@ -56,27 +58,31 @@ public class Item {
     private Date auctionStart;
     @Future
     private Date auctionEnd;
-//    private List<Bid> bids = new ArrayList<>();
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    private List<Bid> bids = new ArrayList<>();
     @Transient
     private BigDecimal initialPriceIncludeTax;
     @NotNull
     @Convert(converter = MonetaryAmountConverter.class, disableConversion = false)
     @Column(name = "current_price", length = 63)
     private MonetaryAmount monetaryAmount;
-//    public void addBid(Bid bid) {
-//        if (bid == null) {
-//            throw new NullPointerException("Bid is null");
-//        }
-//        if (bid.getItem() != null) {
-//            throw new IllegalStateException("Bid already assigned to an Item");
-//        }
-//        bids.add(bid);
-//        bid.setItem(this);
-//    }
-//    /*
-//    Делаем так чтобы геттер возвращал неизменяемую коллекцию
-//     */
-//    public List<Bid> getBids() {
-//        return Collections.unmodifiableList(bids);
-//    }
+
+    /**
+     * Пример для работы с коллекция которые не имеют отдельной сущности
+     */
+    @ElementCollection
+    @CollectionTable(name = "image", joinColumns = @JoinColumn(name = "item_id"))
+    @OrderColumn
+    @Column(name = "filename")
+    @OrderBy("asc")
+    private List<String> images = new ArrayList<>();
+    /**
+     * Пример для работы с map
+     */
+//    @ElementCollection
+//    @CollectionTable(name = "image")
+//    @MapKeyColumn(name = "filename")
+//    @Column(name = "descriptioimagenamen")
+//    protected Map<String, String> images = new HashMap<>();
+
 }

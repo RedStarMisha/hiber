@@ -7,6 +7,8 @@ import ru.get.hiber.model.Item;
 import ru.get.hiber.model.dto.ItemDto;
 import ru.get.hiber.service.buisnes.ItemService;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ItemValidatingAndProcessingService {
@@ -16,5 +18,15 @@ public class ItemValidatingAndProcessingService {
         Item item = itemMapper.mapToItem(itemDto);
         item = itemService.addItem(item);
         return itemMapper.mapToItemDto(item);
+    }
+
+    public List<ItemDto> addItems(List<ItemDto> dtoList) {
+        List<Item> items = dtoList.stream()
+                .map(itemMapper::mapToItem)
+                .toList();
+        items = itemService.addItems(items);
+        return items.stream()
+                .map(itemMapper::mapToItemDto)
+                .toList();
     }
 }
