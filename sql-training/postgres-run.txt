@@ -1,0 +1,1 @@
+docker run -d -p 5432:5432 --rm --name test-db -e POSTGRES_DB=test_db -e POSTGRES_USER=sa -e POSTGRES_PASSWORD=password postgres:17-alpine

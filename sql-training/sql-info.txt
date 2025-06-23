@@ -1,0 +1,162 @@
+Если идетификатор это ключевое слово, то его надо обрамлять в ковычки
+    UPDATE "my_table" SET "a" = 5;
+
+Констранты в sql - фиксированные значения в sql запросе которые не изменяются во время его выполнения
+Выражения - комбинации одного или более значений, операторов и функций, которые вычисляются в определенное значение (вычисляются в момент запроса)
+
+В PostgresSql есть возможнотсть написания функций
+
+Спец знаки
+    $ -  предваряющий число, используется для представления позиционного параметра в теле определения функции или подготовленного оператора
+
+создать таблицу
+    CREATE TABLE products (
+                        product_no integer,
+                        name text,
+                        price numeric
+                    );
+Удалить таблицу
+    DROP TABLE my_first_table;
+Значение поля по умолчанию - DEFAULT
+    CREATE TABLE products (
+        product_no integer,
+        name text,
+        price numeric DEFAULT 9.99
+    );
+    В качестве значения по умолчанию можно использовать функции которые вычисляются в момент записи строки (а не создания таблицы):
+        timestemp или nextval для sequence
+
+Генерируемые столбцы GENERATED ALWAYS AS команды CREATE TABLE. Запись в этот стобец запрещена (INSERT и UPDATE без этого значения)
+    CREATE TABLE people (
+        ...,
+        height_cm numeric,
+        height_in numeric GENERATED ALWAYS AS (height_cm / 2.54) STORED
+    );
+    Ключевое слово STORED отмечает, что этот столбец будет вычисляться при записи и сохраняться на диске.
+    Может обращаться к другим постоянным столбцам, но не генерируемым
+
+Ограничения: есть ограничения поля (указываются в поле) и ограничения таблицы(в конце таблицы)
+    Ограничения проверки CHECK ()
+        ограничения поля
+        CREATE TABLE products (
+            product_no integer,
+            name text,
+            price numeric CHECK (price > 0) ## или CONSTRAINT positive_price CHECK (price > 0)
+        );
+        ограничения таблицы
+        CREATE TABLE products (
+            price numeric CHECK (price > 0),
+            discounted_price numeric CHECK (discounted_price > 0),
+            CHECK (price > discounted_price)
+        );
+    NOT NULL
+    UNIQUE
+        можно указывать несколько столбцов (и их сочетание будет уникальным)
+    PRIMARY KEY
+        аналог UNIQUE NOT NULL
+    REFERENCES - ссылка на другую таблицу
+        REFERENCES products (product_no) - ограничение столбца если ссылка на единичный ключ, но можно и в ограничение таблицы
+        FOREIGN KEY (b, c) REFERENCES other_table (c1, c2) - когда ссылка на составной ключ в другой таблице
+        Можно ссылаться на ту же таблицу в REFERENCES. У головного узла ссылка будет NULL
+        Для связи Many-to-Many
+            CREATE TABLE order_items (
+                product_no integer REFERENCES products,
+                order_id integer REFERENCES orders,
+                quantity integer,
+                PRIMARY KEY (product_no, order_id)
+            );
+    ON DELETE RESTRICT/ON DELETE CASCADE - ограничения запрещающие/позволяющие удалять связанные узлы
+        CREATE TABLE order_items (
+            product_no integer REFERENCES products ON DELETE RESTRICT,
+            order_id integer REFERENCES orders ON DELETE CASCADE,
+            quantity integer,
+            PRIMARY KEY (product_no, order_id)
+        );
+    SET NULL и SET DEFAULT - при удалении связанной сущности
+
+Изменения таблиц - с помощью команды ALTER TABLE
+    - добавление столбца ALTER TABLE products ADD COLUMN description text; (можно указать DEFAULT и заполнить дефолтным значением)
+        Сюда же можно добавит ограничения ALTER TABLE products ADD COLUMN description text CHECK (description <> '');
+    - удаление стобца ALTER TABLE products DROP COLUMN description;
+    - добавление ограничений ALTER TABLE products ADD CHECK (name <> '');
+                             ALTER TABLE products ADD CONSTRAINT some_name UNIQUE (product_no);
+                             ALTER TABLE products ADD FOREIGN KEY (product_group_id) REFERENCES product_groups;
+    - удаление ограничений ALTER TABLE products DROP CONSTRAINT some_name;
+        но тут надо знать имя ограничения. По этому лучше его сразу обзывать
+        для NOT NULL (у него нет имен) ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
+    - значения по умолчанию ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
+                            ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
+    - тип данных столбца
+    - переименование столбца ALTER TABLE products RENAME COLUMN product_no TO product_number;
+    - переименование таблицы ALTER TABLE products RENAME TO items;
+
+
+Права и Роли
+
+    Назначить таблице нового владельца
+        ALTER TABLE имя_таблицы OWNER TO новый_владелец;
+
+    Для назначения прав используется команда
+        GRANT
+    Для лишения прав используется команда
+        REVOKE
+
+    Есть политики защиты отдельных строк таблицы
+        управление политиками CREATE POLICY, ALTER POLICY, DROP POLICY.
+            CREATE POLICY account_managers ON accounts TO managers
+                USING (manager = current_user);
+        чтобы включить политику в таблице ALTER TABLE
+            ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+
+SCHEME - схема нужна для группировке в ней таблиц и других объектов. в разных схемах к примеру может быть таблица с одним названием
+    Схема не имеет ограничений
+
+    Схемы применяются:
+        Чтобы одну базу данных могли использовать несколько пользователей, независимо друг от друга.
+        Чтобы объединить объекты базы данных в логические группы для облегчения управления ими.
+        Чтобы в одной базе сосуществовали разные приложения, и при этом не возникало конфликтов имён.
+
+    CREATE SCHEMA myschema;
+    Для работы с таблицей в определенной схеме следует писать в таком формате
+        схема.таблица
+    Удалить схему
+        если пустая DROP SCHEMA myschema;
+        если не пустая DROP SCHEMA myschema CASCADE;
+    Создать схему для другого юзера
+        CREATE SCHEMA имя_схемы AUTHORIZATION имя_пользователя;
+    Схема PUBLIC создается по умолчанию. Если работать с объектами без указания схемы, то они поместятся в PUBLIC схему (например добавить таблицу)
+    Для того чтобы обращаться к объектам по неполному имени (без указания схемы), надо добавить нашу в путь поиска
+        SET search_path TO myschema,public; здесь мы определяем первостепенной нашу схему myschema (если ее не существует будет public)
+    pg_catalog - системная схема
+
+Сеционирование таблиц - таблицы можно секционировать для повышения быстродействия
+
+Вставка в таблицу - INSERT
+    Можно указывать столбцы в скобка, а можно нет (но тогда нужно соблюдать их порядок)
+    МОжно вставить в таблицу результат другого запроса
+        INSERT INTO products (product_no, name, price)
+          SELECT product_no, name, price FROM new_products
+            WHERE release_date = 'today';
+Обновнение данные в таблице - UPDATE
+    UPDATE products SET price = 10 WHERE price = 5;
+    UPDATE products SET price = price * 1.10;
+    Можно обновлять несколько значений
+        UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
+Удаление данных из таблицы
+    DELETE FROM products WHERE price = 10;
+    Удалить все из таблицы
+        DELETE FROM products;
+Возврат данных из изменённых строк
+    RETURNING возвращает данные после обновления строки. Помогает не делать доп SELECT после. Указание параметров по аналогии SELECT
+    С INSERT - возвращает то что добавлено
+        INSERT INTO users (firstname, lastname) VALUES ('Joe', 'Cool') RETURNING id;
+    С UPDATE - возвращает то что обновлено
+        UPDATE products SET price = price * 1.10 WHERE price <= 99.99 RETURNING name, price AS new_price;
+    с DELETE - возвращает то что было удалено
+        DELETE FROM products WHERE obsoletion_date = 'today' RETURNING *;
+Запросы
+    Любой запрос создает виртуальную таблицу в которую помещается выборка и передается клиенту
+    Запрос это просто SELECT
+        SELECT * FROM table1; (FROM table1 - простейшее табличное выражение)
+        SELECT 3 + 2; (просто выдаст сумму)
+
