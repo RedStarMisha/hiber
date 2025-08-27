@@ -10,17 +10,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-//@SpringBootApplication
+@SpringBootApplication
 public class CaffeineTestApp {
     public static void main(String[] args) {
-//        SpringApplication.run(CaffeineTestApp.class, args);
-        Cache<String, String> cache = Caffeine.newBuilder()
-                .expireAfterWrite(300, TimeUnit.SECONDS)
-                .maximumWeight(10)
-                .weigher(Weigher.singletonWeigher())
-                .build();
-        cache.put("test", "value");
-        Optional<String> result = Optional.ofNullable(cache.getIfPresent("test"));
-        result.ifPresentOrElse(System.out::println, () -> System.out.println("not found"));
+        SpringApplication.run(CaffeineTestApp.class, args);
+//        Cache<String, String> cache = Caffeine.newBuilder()
+//                .expireAfterWrite(300, TimeUnit.SECONDS)
+//                .maximumWeight(10)
+//                .weigher(Weigher.singletonWeigher())
+//                .build();
+//        cache.put("test", "value");
+//        Optional<String> result = Optional.ofNullable(cache.getIfPresent("test"));
+//        result.ifPresentOrElse(System.out::println, () -> System.out.println("not found"));
     }
 }

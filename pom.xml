@@ -22,6 +22,8 @@
         <module>caffeine-test</module>
         <module>discovery</module>
         <module>gateway</module>
+        <module>sql-training</module>
+        <module>spring-ripper</module>
     </modules>
 
     <properties>

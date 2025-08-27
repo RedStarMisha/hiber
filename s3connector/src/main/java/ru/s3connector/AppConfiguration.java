@@ -1,8 +1,14 @@
 package ru.s3connector;
 
+import io.minio.MinioClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -35,7 +41,20 @@ public class AppConfiguration {
     }
 
     @Bean
-    public S3AsyncClient s3client(@Value("${s3.user}") String user,
+    public WebClient webClient() {
+        return WebClient.builder()
+                .baseUrl("http://localhost:8080").build();
+    }
+
+    @Bean
+    public RestClient restClient() {
+        return RestClient.create("http://localhost:8080");
+    }
+
+    @Bean
+    @Qualifier("s3AsyncClient")
+    @Primary
+    public S3AsyncClient s3Asyncclient(@Value("${s3.user}") String user,
                                   @Value("${s3.password}") String password,
                                   @Value("${s3.region}") String region,
                                   @Value("${s3.endpoint}") String endpoint) {
@@ -44,7 +63,6 @@ public class AppConfiguration {
                 .maxConcurrency(64)
                 .build();
         S3Configuration serviceConfiguration = S3Configuration.builder()
-                .checksumValidationEnabled(false)
                 .chunkedEncodingEnabled(true)
                 .build();
         S3AsyncClientBuilder b = S3AsyncClient.builder()
@@ -54,6 +72,31 @@ public class AppConfiguration {
                 .credentialsProvider(() -> AwsBasicCredentials.create(user, password))
                 .serviceConfiguration(serviceConfiguration);
         return b.build();
+    }
+
+    /**
+     * Специальный высокопроизводительный клиент CRT. Используется для компонентной загрузки (в частности
+     * для загрузки файла без указания длины пакета). Ссылка на доку
+     * <a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/crt-based-s3-client.html">...</a>
+     * @param user
+     * @param password
+     * @param region
+     * @param endpoint
+     * @return
+     */
+    @Bean
+    @Qualifier("s3AsyncCrtClient")
+    public S3AsyncClient s3AsyncCrtClient(@Value("${s3.user}") String user,
+                                  @Value("${s3.password}") String password,
+                                  @Value("${s3.region}") String region,
+                                  @Value("${s3.endpoint}") String endpoint) {
+        return S3AsyncClient.crtBuilder()
+                .endpointOverride(URI.create("http://" + endpoint))
+                .region(Region.AP_EAST_1)
+                .credentialsProvider(() -> AwsBasicCredentials.create(user, password))
+                .targetThroughputInGbps(20.0)
+                .minimumPartSizeInBytes(8 * 1025 * 1024L)
+                .build();
     }
 
 
@@ -68,6 +111,16 @@ public class AppConfiguration {
                 .endpointOverride(URI.create("http://" + endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
                 .region(Region.AP_EAST_1) // this is not used, but the AWS SDK requires it
+                .build();
+    }
+
+    @Bean
+    public MinioClient minioClient(@Value("${s3.user}") String user,
+                                   @Value("${s3.password}") String password,
+                                   @Value("${s3.endpoint}") String endpoint) {
+        return MinioClient.builder()
+                .endpoint("http://" + endpoint)
+                .credentials(user, password)
                 .build();
     }
 }

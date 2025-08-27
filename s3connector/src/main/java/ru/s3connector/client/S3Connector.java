@@ -1,19 +1,21 @@
 package ru.s3connector.client;
 
+import io.minio.MinioClient;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.ResponseInputStream;
+import ru.s3connector.model.MyContentStreamProvider;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
+import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
 import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -22,7 +24,9 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -34,7 +38,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class S3Connector {
     @Getter
@@ -42,16 +45,33 @@ public class S3Connector {
     @Getter
     private final S3AsyncClient s3AsyncClient;
 
+    private final S3AsyncClient s3AsyncCrtClient;
+
     private final S3Presigner s3Presigner;
 
-    private final String BUCKET_NAME = "test-bucket";
+    private final MinioClient minioClient;
+
+    public S3Connector(S3Client s3Client,
+                       @Qualifier("s3AsyncClient") S3AsyncClient s3AsyncClient,
+                       @Qualifier("s3AsyncCrtClient") S3AsyncClient s3AsyncCrtClient,
+                       S3Presigner s3Presigner,
+                       MinioClient minioClient) {
+        this.s3Client = s3Client;
+        this.s3AsyncClient = s3AsyncClient;
+        this.s3AsyncCrtClient = s3AsyncCrtClient;
+        this.s3Presigner = s3Presigner;
+        this.minioClient = minioClient;
+    }
+
+    @Value("${s3.bucket-name}")
+    private String bucketName;
 
     private final String PREFIX = "lego/";
 
     public CompletableFuture<PutObjectResponse> putFlux(long length, String fileName, MediaType mediaType, Flux<ByteBuffer> body) {
         return s3AsyncClient
                 .putObject(PutObjectRequest.builder()
-                                .bucket(BUCKET_NAME)
+                                .bucket(bucketName)
                                 .contentLength(length)
                                 .key(PREFIX + fileName)
                                 .contentType(mediaType.toString())
@@ -73,7 +93,7 @@ public class S3Connector {
                 .build();
         return s3AsyncClient
                 .putObject(PutObjectRequest.builder()
-                                .bucket(BUCKET_NAME)
+                                .bucket(bucketName)
                                 .contentLength(length)
                                 .key(PREFIX + fileName)
                                 .contentType(mediaType.toString())
@@ -83,29 +103,19 @@ public class S3Connector {
                         AsyncRequestBody.fromPublisher(body));
     }
 
-    public void createBucket() {
-        CreateBucketResponse response = s3Client.createBucket(request -> request.bucket("test-bucket"));
-    }
 
-    public List<String> getAllBuckets() {
-        ListBucketsResponse response = s3Client.listBuckets();
-        return response.buckets().stream()
-                .map(Bucket::name)
-                .toList();
-    }
-
-    public URL uploadObjects(MultipartFile file) {
+    public URL putObject(MultipartFile file) {
         String original = file.getOriginalFilename();
         try {
             PutObjectResponse response = s3Client.putObject(req -> {
-                        req.bucket("test-bucket")
-                                .key("lego/" + original);
+                        req.bucket(bucketName)
+                                .key(original);
                     },
                     RequestBody.fromBytes(file.getBytes()));
 
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(preReq -> {
                 preReq.getObjectRequest(req -> {
-                    req.bucket("test-bucket").key("lego/" + original);
+                    req.bucket(bucketName).key(original);
                 }).signatureDuration(Duration.ofHours(1));
             });
             return presignedRequest.url();
@@ -200,18 +210,9 @@ public class S3Connector {
         return completedParts;
     }
 
-    public byte[] getFile(String name) {
-        ResponseBytes<GetObjectResponse> responseBytes =
-                s3Client.getObjectAsBytes(req -> req.bucket("test-bucket")
-                        .key("lego/" + name));
-        return responseBytes.asByteArray();
-    }
-    public Resource getFileAsStream(String name) {
-        ResponseInputStream<GetObjectResponse> responseInputStream =
-                s3Client.getObject(req -> req.bucket("test-bucket")
-                        .key("lego/" + name));
-        Resource resource = new InputStreamResource(responseInputStream);
-        return resource;
+    public InputStream getObject(String bucket, String key) {
+        return s3Client.getObject(req -> req.bucket(bucket)
+                        .key(key));
     }
 
     public void getTags(String name) {
@@ -255,46 +256,67 @@ public class S3Connector {
 //        });
     }
 
-    public void addRule() {
-        LifecycleRule rule = LifecycleRule.builder()
-                .id("auto delete")
-                .expiration(LifecycleExpiration.builder().days(1).build())
-                .status(ExpirationStatus.ENABLED)
-                .build();
-        BucketLifecycleConfiguration configuration = BucketLifecycleConfiguration.builder()
-                .rules(rule)
-                .build();
-
-        s3Client.putBucketLifecycleConfiguration(request -> request.bucket("test-bucket")
-                .lifecycleConfiguration(configuration));
-    }
-
-    public List<String> getRules(String name) {
-        GetBucketLifecycleConfigurationResponse response = s3Client.getBucketLifecycleConfiguration(req -> req.bucket(name));
-        return response.rules().stream().map(LifecycleRule::id)
-                .toList();
-    }
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
-    public void uploadFile(MultipartFile file) {
+    @SneakyThrows
+    public boolean putObjectAsStream(MultipartFile file) {
         String original = file.getOriginalFilename();
-        try {
-//            PutObjectResponse response = s3Client.putObject(req ->
-//                            req.bucket("test-bucket")
-//                                    .key("lego/" + original),
-//                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+        String contentType = "application/octet-stream";
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .contentType(contentType)
+                .key(original).build();
+        s3Client.putObject(request,
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+        return true;
+    }
+    @SneakyThrows
+    public boolean putObjectAsStream(InputStream inputStream, long contentLength, String key) {
+        String contentType = "application/octet-stream";
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .contentType(contentType)
+                .key(key).build();
+//        s3Client.putObject(request, RequestBody.fromContentProvider(ContentStreamProvider.fromInputStream(
+//                new BufferedInputStream(inputStream)), contentType));
+        s3Client.putObject(request, RequestBody.fromContentProvider(new MyContentStreamProvider(inputStream), contentType));
+        return true;
+    }
 
-            PutObjectRequest request = PutObjectRequest.builder()
-                    .bucket("test-bucket")
-                    .key("lego/" + original).build();
-            CompletableFuture<PutObjectResponse> future = s3AsyncClient.putObject(request,
-                    AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
+    /**
+     * Загрузка объекта в режиме потока при неизвестной длине пакета с помощью CRT клиента
+     * @param inputStream
+     * @param contentLength
+     * @param key
+     */
+    @SneakyThrows
+    public void putObjectFromStream(InputStream inputStream, long contentLength, String key) {
+        BlockingInputStreamAsyncRequestBody body =
+                AsyncRequestBody.forBlockingInputStream(null); // 'null' indicates a stream will be provided later.
+        CompletableFuture<PutObjectResponse> responseFuture =
+                s3AsyncCrtClient.putObject(r -> r.bucket(bucketName).key(key), body);
 
-            future.thenAccept(responseFuture -> log.info("complete {}", file.getOriginalFilename()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        // Provide the stream of data to be uploaded.
+        body.writeInputStream(new BufferedInputStream(inputStream));
 
+        responseFuture.join();
+        inputStream.close();// Wait for the response.
+    }
+
+
+
+    @SneakyThrows
+    public boolean putObjectAsStreamAsync(MultipartFile file) {
+        String original = file.getOriginalFilename();
+        String contentType = "application/octet-stream";
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(original).build();
+        CompletableFuture<PutObjectResponse> future = s3AsyncClient.putObject(request,
+                AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
+
+        future.thenAccept(responseFuture -> log.info("complete {}", file.getOriginalFilename()));
+        return true;
     }
 }

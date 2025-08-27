@@ -24,15 +24,14 @@
         </dependency>
 
 <!--        Для того чтобы добавить Flux и прочее из реактора-->
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.projectreactor</groupId>-->
+<!--            <artifactId>reactor-core</artifactId>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
-<!--            <version>3.3.2</version>-->
 <!--            <exclusions>-->
 <!--                <exclusion>-->
 <!--                    <groupId>org.springframework</groupId>-->
@@ -46,10 +45,24 @@
             <artifactId>s3</artifactId>
         </dependency>
 
+<!--        Специальная зависимости для высокопроизводительного CRT клиента-->
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.37.0</version>
+        </dependency>
+
 <!--        реактивный клиент для s3-->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>netty-nio-client</artifactId>
+        </dependency>
+
+<!--        minio client который поддерживает загрузку в потоке без указания длинны пакета-->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.7</version> <!-- or latest -->
         </dependency>
 
 
@@ -74,7 +87,8 @@
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>2.29.50</version>
+<!--                <version>2.29.50</version>-->
+                <version>2.31.10</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

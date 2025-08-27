@@ -10,6 +10,7 @@ import ru.get.hiber.repository.UserRepository;
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
+    protected String a;
     private final UserRepository userRepository;
     public User addUser(User user)  {
         User savedUser = userRepository.save(user);

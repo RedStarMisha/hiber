@@ -26,4 +26,9 @@ public class CacheController {
     public void initializeGS() {
         fileService.initializeGS();
     }
+
+    @GetMapping("ex")
+    public void getData() {
+        throw new RuntimeException();
+    }
 }

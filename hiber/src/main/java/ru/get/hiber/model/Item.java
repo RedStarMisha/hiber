@@ -67,6 +67,10 @@ public class Item {
     @Column(name = "current_price", length = 63)
     private MonetaryAmount monetaryAmount;
 
+    @OneToOne
+    @JoinColumn(name = "linked_item_id")
+    private Item linkedItem;
+
     /**
      * Пример для работы с коллекция которые не имеют отдельной сущности
      */

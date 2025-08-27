@@ -33,6 +33,28 @@ public class TestClient {
                 .build();
     }
 
+    public void getFileDefault() throws URISyntaxException, IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("http://localhost:8080/file/default?file=22.exe"))
+                .GET()
+                .build();
+        httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+    }
+    public void getFileResource() throws URISyntaxException, IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("http://localhost:8080/file/resource?file=22.exe"))
+                .GET()
+                .build();
+        httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+    }
+    public void getFileStream() throws URISyntaxException, IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("http://localhost:8080/file/stream?file=22.exe"))
+                .GET()
+                .build();
+        httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+    }
+
     public void uploadSync(String filePath) {
         File file = new File(filePath);
 
